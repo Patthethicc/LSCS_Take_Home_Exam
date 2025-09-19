@@ -6,11 +6,11 @@
 git clone https://github.com/Patthethicc/LSCS_Take_Home_Exam
 cd LSCS_Take_Home_Exam
 ```
-2. Install the dependencies
+2. Install the dependencies (must have node.js installed)
 ```bash
 npm install
 ```
-3. Create `.env` file
+3. Create `.env` file (must have mysql db server running)
 consists of:
 ```bash
 DB_HOST=
