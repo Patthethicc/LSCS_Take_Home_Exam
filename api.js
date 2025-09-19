@@ -28,6 +28,20 @@ connect();
 app.post('/products', async (req, res) => {
     try {
         const {name, price, sellerName, rating} = req.body;
+
+        if(name == null || sellerName == null || name == '' || sellerName == '') {
+            res.status(400).json({
+                message: `Please set product name or seller name`,
+            });
+        } else if(price < 0 || rating < 0) {
+            res.status(400).json({
+                message: `Please input a positive value`,
+            });
+        } else if(rating > 5) {
+            res.status(400).json({
+                message: `Please input a rating less than 6`,
+            });
+        }
         
         const result = (await connection)
             .query('INSERT INTO product (name, price, sellerName, rating) VALUES (?,?,?,?)',
@@ -37,7 +51,6 @@ app.post('/products', async (req, res) => {
             message: `Product '${name}' added Successfully!`,
         });
     } catch(err) {
-        console.log(err)
        res.status(500).json({
             message: 'Failed to add the product.'
         });
@@ -47,27 +60,98 @@ app.post('/products', async (req, res) => {
 app.get('/products', async (req, res) => {
     try {
         const [rows] = await (await connection).query('SELECT * FROM product');
-        console.log(rows)
+
+        if (rows.length == 0) {
+            res.status(404).json({ 
+                message: 'Products not found' 
+            });
+        }
 
         res.status(200).json(rows);
     } catch(err) {
-        console.log(err)
         res.status(500).json({
-            message: 'Failed to gather the products'
+            message: 'Failed to gather products'
         });
     }
 })
 
-app.get('/products/:id', (req, res) => {
+app.get('/products/:id', async (req, res) => {
+    try {
+        const {id} = req.params;
+        const [product] = await (await connection).query('SELECT * FROM product WHERE id = ?', [id]);
 
+        if (product.affectedRows == 0) {
+            res.status(404).json({ 
+                message: 'Product not found' 
+            });
+        }
+
+        res.status(200).json(product);
+    } catch(err) {
+        res.status(500).json({
+            message: 'Failed to gather the product'
+        });
+    }
 })
 
-app.put('/products/:id', (req, res) => {
+app.put('/products/:id', async (req, res) => {
+    try {
+        const {id} = req.params;
+        const {name, price, sellerName, rating} = req.body;
 
+        if(name == null || sellerName == null || name == '' || sellerName == '') {
+            res.status(400).json({
+                message: `Please set product name or seller name`,
+            });
+        } else if(price < 0 || rating < 0) {
+            res.status(400).json({
+                message: `Please input a positive value`,
+            });
+        } else if(rating > 5) {
+            res.status(400).json({
+                message: `Please input a rating less than 6`,
+            });
+        }
+
+        const [editedProduct] = await (await connection)
+        .query('UPDATE product SET name = ?, price = ?, sellerName = ?, rating = ? WHERE id = ?',
+            [name, price, sellerName, rating, id]);
+
+        if (editedProduct.affectedRows == 0) {
+            res.status(404).json({ 
+                message: 'Product not found' 
+            });
+        }
+
+        res.status(200).json({
+            message: `Product '${name}' edited Successfully!`
+        });
+    } catch(err) {
+        res.status(500).json({
+            message: 'Failed to edit the product'
+        });
+    }
 })
 
-app.delete('/products/:id', (req, res) => {
+app.delete('/products/:id', async (req, res) => {
+    try {
+        const {id} = req.params;
+        const [deleted] = await (await connection).query('DELETE FROM product WHERE id = ?', [id]);
 
+        if (deleted.affectedRows == 0) {
+            res.status(404).json({ 
+                message: 'Product not found' 
+            });
+        }
+
+        res.status(200).json({
+            message: `Product deleted Successfully!`
+        });
+    } catch(err) {
+        res.status(500).json({
+            message: 'Failed to delete the product'
+        });
+    }
 })
 
 app.listen(PORT, (error) =>{
